@@ -1,7 +1,7 @@
 pipeline {
 agent any
 environment {
-DOCKER_CREDENTIALS = creden􀆟als('docker-hub-login')
+DOCKER_CREDENTIALS = credentials('docker-hub-login')
 }
 stages {
 stage('SCM') {
