@@ -1,63 +1,50 @@
 pipeline {
-    agent any
-
-    environment {
-        IMAGE_NAME = "iswaryasundaramoorthy/trend-app"
-    }
-
-    stages {
-
-        stage('Clone Repository') {
-            steps {
-                git branch: 'main',
-                url: 'https://github.com/Vennilavanguvi/Trend.git'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME .'
-            }
-        }
-
-        stage('Push Image to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $IMAGE_NAME
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                sh '''
-                docker stop trend-container || true
-                docker rm trend-container || true
-
-                docker run -d \
-                --name trend-container \
-                -p 3000:3000 \
-                iswaryasundaramoorthy/trend-app
-                '''
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Application deployed successfully'
-        }
-
-        failure {
-            echo 'Pipeline failed'
-        }
-    }
+agent any
+environment {
+DOCKER_CREDENTIALS = creden􀆟als('docker-hub-login')
+}
+stages {
+stage('SCM') {
+steps {
+git branch: 'main', changelog: false, poll: false, url:
+'https://github.com/techfarmersrikanth/sample-java-app.git'
+}
+}
+stage("Display the code") {
+steps {
+sh 'ls -lrt'
+}
+}
+stage("Build") {
+steps {
+sh 'mvn package'
+}
+}
+stage("Test") {
+steps {
+sh 'mvn test'
+}
+}
+stage("docker-image") {
+steps {
+sh 'docker build -t srikanthdev1/myjenkins-pipeline:1.0 .'
+}
+}
+stage("display-image") {
+steps {
+sh 'docker images'
+}
+}
+stage("docker-login") {
+steps {
+sh "echo $DOCKER_CREDENTIALS_PSW | docker login -u
+$DOCKER_CREDENTIALS_USR --password-stdin"
+}
+}
+stage("docker-push") {
+steps {
+sh "docker push srikanthdev1/myjenkins-pipeline:1.0"
+}
+}
+}
 }
