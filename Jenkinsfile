@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_CREDENTIALS = credentials('docker-hub-login')
+    tools {
+        maven 'New maven'
     }
 
     stages {
@@ -33,7 +33,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t iswarya602-lang/myjenkins-pipeline:1.0 .'
+                sh '''
+                docker build -t iswaryasundaramoorthy/git-version-control:1.0 .
+                '''
             }
         }
 
@@ -45,18 +47,40 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh '''
-                echo $DOCKER_CREDENTIALS_PSW | docker login \
-                -u $DOCKER_CREDENTIALS_USR --password-stdin
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-hub-login',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh 'docker push iswarya602-lang/myjenkins-pipeline:1.0'
+                sh '''
+                docker push iswaryasundaramoorthy/git-version-control:1.0
+                '''
             }
         }
+    }
 
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+
+        success {
+            echo 'Docker image built and pushed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
+        }
     }
 }
